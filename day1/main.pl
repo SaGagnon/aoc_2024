@@ -32,5 +32,19 @@ solve1(S) :-
 % Part 2
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-solve2(_) :-
-    phrase_from_file(_, 'small_input.txt').
+eq(X, X, 1).
+eq(X, Y, 0) :- dif(X,Y).
+
+nb_eq(Lst, X, Nb) :-
+    maplist(eq(X), Lst, Eqs),
+    sum_list(Eqs, Nb).
+
+similarity(RightLst, X, Sim) :-
+    nb_eq(RightLst, X, NbEq),
+    Sim is X * NbEq.
+
+solve2(S) :-
+    phrase_from_file(pairs(Pairs), 'input.txt'),
+    transpose(Pairs, [List1, List2]),
+    maplist(similarity(List2), List1, Sims),
+    sum_list(Sims, S).
