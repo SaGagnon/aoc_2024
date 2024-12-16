@@ -75,5 +75,47 @@ solve1(N) :-
 % Part 2
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-solve2(_) :-
-    phrase_from_file(_, 'small_input.txt').
+good(`MSAMS`).
+good(`MMASS`).
+good(`SMASM`).
+good(`SSAMM`).
+
+mat_elem(Arrs, I-J, Elem) :-
+    nth1(J, Arrs, Arr),
+    arg(I, Arr, Elem).
+
+good_i_j(Arrs, I, J) :-
+    good(G),
+    J1 is J+1, I1 is I+1,
+    J2 is J+2, I2 is I+2,
+    maplist(mat_elem(Arrs),
+            [I-J, I2-J, I1-J1, I-J2, I2-J2],
+            G),
+    !.
+
+list_array(L, Arr) :-
+    Arr =.. [arr|L].
+
+lists_arrays(Ls, Arrs) :-
+    maplist(list_array, Ls, Arrs).
+
+valid(Arrs, I, J) :-
+    length(Arrs, JN),
+    Arrs = [Arr|_],
+    functor(Arr, _, IN),
+    valid_(Arrs, I, J, IN, JN).
+
+valid_(Arrs, I, J, IN, JN) :-
+    I in 1..IN,
+    J in 1..JN,
+    label([I,J]),
+    good_i_j(Arrs, I, J).
+
+nb_valid(Arrs, Nb) :-
+    findall(1, valid(Arrs, _, _), Nbs),
+    sum_list(Nbs, Nb).
+
+solve2(Nb) :-
+    phrase_from_file(lines(Ls), 'input.txt'),
+    lists_arrays(Ls, Arrs),
+    nb_valid(Arrs, Nb).
