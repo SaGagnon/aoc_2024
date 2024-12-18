@@ -40,7 +40,7 @@ get_var_assoc(Key, Assoc0, A-Value, Assoc) :-
 add_constraint(before(X,Y), Assoc0, Assoc) :-
     get_var_assoc(X, Assoc0, AX-VX, Assoc1),
     get_var_assoc(Y, Assoc1, AY-VY, Assoc),
-    AX #/\ AY #==> VX #< VY.
+    when((ground(AX), ground(AY)), VX #< VY).
 
 constrained_positions(ORs, Ps) :-
     empty_assoc(Ps0),
@@ -57,9 +57,9 @@ update_ok(Ps, U, Middle) :-
     nth1(MidIdx, U, Middle).
 
 solve1(M) :-
-    phrase_from_file(problem(ORs, Us), 'small_input.txt'),
+    phrase_from_file(problem(ORs, Us), 'input.txt'),
     constrained_positions(ORs, Ps),
-    findall(M, (member(U, Us), print(U), nl, update_ok(Ps, U, M)), Ms),
+    findall(M, (member(U, Us), update_ok(Ps, U, M)), Ms),
     sum_list(Ms, M).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -83,5 +83,5 @@ corrected_order(Ps, U, Middle) :-
 solve2(M) :-
      phrase_from_file(problem(ORs, Us), 'input.txt'),
     constrained_positions(ORs, Ps),
-    findall(M, (member(U, Us), print(U), nl, corrected_order(Ps, U, M)), Ms),
+    findall(M, (member(U, Us), corrected_order(Ps, U, M)), Ms),
     sum_list(Ms, M).
