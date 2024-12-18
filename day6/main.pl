@@ -58,7 +58,9 @@ out_of_bound(I, J, Mat) :-
 path(Mat, state(Dir0, I0, J0, Path0), Path) :-
     next_i_j(Dir0, I0, J0, I1, J1),
     (
-        out_of_bound(I1, J1, Mat)
+        (   out_of_bound(I1, J1, Mat)
+        ;   looping([I0-J0|Path0])
+        )
     ->
         Path=[I0-J0|Path0]
     ;   
@@ -80,7 +82,6 @@ path(Mat, Path) :-
     array(Mat, [JN, IN]),
     list_of([I in 1..IN, J in 1..JN] where Mat[J,I]=='^', I-J, [I-J]),
     path(Mat, state(up, I, J, []), Path).
-    
 
 solve1(L) :-
     phrase_from_file(lines(Ls), 'input.txt'),
@@ -93,5 +94,32 @@ solve1(L) :-
 % Part 2
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-solve2(_) :-
-    phrase_from_file(_, 'small_input.txt').
+looping([IJ1, IJ2|IJs]) :-
+    looping(IJ1, IJ2, IJs).
+
+looping(_, _, [_]) :- false.
+looping(IJ1, IJ2, [IJ3, IJ4 | IJs]) :-
+    (   IJ1=IJ3, IJ2=IJ4
+    ->  true
+    ;   looping(IJ1, IJ2, [IJ4|IJs])
+    ).
+
+looping_starting_at(Mat, I, J, IN, JN) :-
+    between(1, IN, I),
+    between(1, JN, J),
+    print([I,J]),nl,
+    arg(J, Mat, JRow),
+    setarg(I, JRow, '#'),
+    path(Mat, Path),
+    looping(Path).
+
+nb_looping(Mat, Count) :-
+    array(Mat, [JN, IN]),
+    aggregate_all(count, looping_starting_at(Mat, _, _, IN, JN), Count).
+
+
+solve2(Count) :-
+    phrase_from_file(lines(Ls), 'input.txt'),
+    array_lists(Mat, Ls),
+    nb_looping(Mat, Count).
+    
