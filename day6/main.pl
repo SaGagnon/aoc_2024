@@ -55,11 +55,12 @@ out_of_bound(I, J, Mat) :-
     ;   J > NJ
     ), !.
 
-path(Mat, state(Dir0, I0, J0, Path0), Path) :-
+path(Mat, state(Dir0, I0, J0, Path0, NbIter0), Path) :-
     next_i_j(Dir0, I0, J0, I1, J1),
+    succ(NbIter0, NbIter),
     (
         (   out_of_bound(I1, J1, Mat)
-        ;   looping([I0-J0|Path0])
+        ;   NbIter > 30000 % Hack
         )
     ->
         Path=[I0-J0|Path0]
@@ -69,19 +70,17 @@ path(Mat, state(Dir0, I0, J0, Path0), Path) :-
                 Elem='#'
             ->
                 next_dir(Dir0, Dir1),
-                path(Mat, state(Dir1, I0, J0, Path0), Path)
+                path(Mat, state(Dir1, I0, J0, Path0, NbIter), Path)
             ;
                 free(Elem)
             ->
-                path(Mat, state(Dir0, I1, J1, [I0-J0|Path0]), Path)
+                path(Mat, state(Dir0, I1, J1, [I0-J0|Path0], NbIter), Path)
             )
         )
     ).
 
 path(Mat, Path) :-
-    array(Mat, [JN, IN]),
-    list_of([I in 1..IN, J in 1..JN] where Mat[J,I]=='^', I-J, [I-J]),
-    path(Mat, state(up, I, J, []), Path).
+    path(Mat, state(up, 63, 60, [], 0), Path).
 
 solve1(L) :-
     phrase_from_file(lines(Ls), 'input.txt'),
@@ -97,16 +96,18 @@ solve1(L) :-
 looping([IJ1, IJ2|IJs]) :-
     looping(IJ1, IJ2, IJs).
 
-looping(_, _, [_]) :- false.
 looping(IJ1, IJ2, [IJ3, IJ4 | IJs]) :-
     (   IJ1=IJ3, IJ2=IJ4
     ->  true
     ;   looping(IJ1, IJ2, [IJ4|IJs])
     ).
 
-looping_starting_at(Mat, I, J, IN, JN) :-
-    between(1, IN, I),
-    between(1, JN, J),
+looping_starting_at(Mat, I, J) :-
+    % Puzzle original pour tester les obstacles
+    path(Mat, Path0),
+    sort(Path0, Path1),
+    member(I-J, Path1),
+    % On place l'obstacle
     print([I,J]),nl,
     arg(J, Mat, JRow),
     setarg(I, JRow, '#'),
@@ -114,8 +115,7 @@ looping_starting_at(Mat, I, J, IN, JN) :-
     looping(Path).
 
 nb_looping(Mat, Count) :-
-    array(Mat, [JN, IN]),
-    aggregate_all(count, looping_starting_at(Mat, _, _, IN, JN), Count).
+    aggregate_all(count, looping_starting_at(Mat, _, _), Count).
 
 
 solve2(Count) :-
